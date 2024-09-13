@@ -9,11 +9,16 @@ resource newRG 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   location: resourceGroupLocation
 }
 
-module cosmos 'cosmos.bicep' = {
+module cosmosDb 'cosmos.bicep' = {
   name: 'cosmosDb'
   scope: newRG
   params: {
     databaseName: 'foodFinder'
     containerName: 'testContainer'
   }
+}
+
+module webApp 'webapp.bicep' = {
+  name: 'webApp'
+  scope: newRG
 }
