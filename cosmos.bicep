@@ -8,6 +8,11 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
   name: toLower(accountName)
   location: location
   properties: {
+    capabilities: [
+      {
+        name: 'EnableGremlin'
+      }
+    ]
     enableFreeTier: true
     databaseAccountOfferType: 'Standard'
     consistencyPolicy: {
