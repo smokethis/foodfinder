@@ -48,9 +48,9 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
       id: containerName
       partitionKey: {
         paths: [
-          '/id'
+          '/location'
         ]
-        kind: 'int'
+        kind: 'str'
       }
       indexingPolicy: {
         indexingMode: 'consistent'
