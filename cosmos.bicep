@@ -4,9 +4,6 @@ param accountName string = 'cosmos-${uniqueString(resourceGroup().id)}'
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
 
-@description('The name for the Gremlin database')
-param databaseName string
-
 resource account 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
   name: toLower(accountName)
   location: location
@@ -29,7 +26,7 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases@2024-0
   parent: account
   properties: {
     resource: {
-      id: databaseName
+      id: 'fooddb'
     }
   }
 }

@@ -12,9 +12,6 @@ resource newRG 'Microsoft.Resources/resourceGroups@2024-03-01' = {
 module cosmosDb 'cosmos.bicep' = {
   name: 'cosmosDb'
   scope: newRG
-  params: {
-    databaseName: 'foodFinder'
-  }
 }
 
 module webApp 'webapp.bicep' = {
