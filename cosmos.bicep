@@ -53,7 +53,7 @@ resource symbolicname 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases/gr
         uniqueKeys: [
           {
             paths: [
-              '/id'
+              '/name'
             ]
           }
         ]
