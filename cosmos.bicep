@@ -49,10 +49,6 @@ resource symbolicname 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases/gr
         ]
         version: 2
       }
-      restoreParameters: {
-        restoreSource: 'string'
-        restoreTimestampInUtc: 'string'
-      }
       uniqueKeyPolicy: {
         uniqueKeys: [
           {
