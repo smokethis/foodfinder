@@ -4,11 +4,8 @@ param accountName string = 'cosmos-${uniqueString(resourceGroup().id)}'
 @description('Location for the Cosmos DB account.')
 param location string = resourceGroup().location
 
-@description('The name for the SQL API database')
+@description('The name for the Gremlin database')
 param databaseName string
-
-@description('The name for the SQL API container')
-param containerName string
 
 resource account 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
   name: toLower(accountName)
@@ -27,49 +24,42 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
   }
 }
 
-resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-11-15' = {
+resource database 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases@2024-05-15' = {
+  name: 'fooddb'
   parent: account
-  name: databaseName
   properties: {
     resource: {
       id: databaseName
     }
-    options: {
-      throughput: 1000
-    }
   }
 }
 
-resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = {
+resource symbolicname 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases/graphs@2024-05-15' = {
+  name: 'foods'
   parent: database
-  name: containerName
   properties: {
     resource: {
-      id: containerName
+      id: 'foods'
       partitionKey: {
+        kind: 'Hash'
         paths: [
           '/location'
         ]
-        kind: 'hash'
+        version: 2
       }
-      indexingPolicy: {
-        indexingMode: 'consistent'
-        includedPaths: [
+      restoreParameters: {
+        restoreSource: 'string'
+        restoreTimestampInUtc: 'string'
+      }
+      uniqueKeyPolicy: {
+        uniqueKeys: [
           {
-            path: '/*'
-          }
-        ]
-        excludedPaths: [
-          {
-            path: '/_etag/?'
+            paths: [
+              '/id'
+            ]
           }
         ]
       }
     }
   }
 }
-
-output location string = location
-output name string = container.name
-output resourceGroupName string = resourceGroup().name
-output resourceId string = container.id

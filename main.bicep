@@ -14,7 +14,6 @@ module cosmosDb 'cosmos.bicep' = {
   scope: newRG
   params: {
     databaseName: 'foodFinder'
-    containerName: 'testContainer'
   }
 }
 
