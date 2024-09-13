@@ -50,7 +50,7 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
         paths: [
           '/location'
         ]
-        kind: 'str'
+        kind: 'hash'
       }
       indexingPolicy: {
         indexingMode: 'consistent'
