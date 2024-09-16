@@ -27,7 +27,7 @@ resource account 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
 }
 
 resource database 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases@2024-05-15' = {
-  name: 'fooddb'
+  name: 'mealdb'
   parent: account
   properties: {
     resource: {
