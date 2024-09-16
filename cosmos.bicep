@@ -45,7 +45,7 @@ resource symbolicname 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases/gr
       partitionKey: {
         kind: 'Hash'
         paths: [
-          '/location'
+          '/mealCategory'
         ]
         version: 2
       }
