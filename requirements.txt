@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-dotenv
+aiohttp
+azure-cosmos
+pydantic
+pydantic-settings
+gremlinpython==3.7.2
+async-timeout
+asyncio
