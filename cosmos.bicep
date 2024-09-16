@@ -31,17 +31,17 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases@2024-0
   parent: account
   properties: {
     resource: {
-      id: 'fooddb'
+      id: 'mealdb'
     }
   }
 }
 
 resource symbolicname 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases/graphs@2024-05-15' = {
-  name: 'foods'
+  name: 'meals'
   parent: database
   properties: {
     resource: {
-      id: 'foods'
+      id: 'meals'
       partitionKey: {
         kind: 'Hash'
         paths: [
