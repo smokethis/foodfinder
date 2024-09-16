@@ -5,33 +5,13 @@ import os
 import traceback
 import pydanticmodels
 from typing import Type
+import json
 
 # Set up vars for development
 DATABASE_NAME = "mealdb"
 GRAPH_NAME = "foods"
 COSMOS_GREMLIN_ENDPOINT = os.environ["COSMOS_GREMLIN_ENDPOINT"]
 COSMOS_GREMLIN_KEY = os.environ["COSMOS_GREMLIN_KEY"]
-
-_gremlin_insert_edges = [
-    "g.V('thomas').addE('knows').to(g.V('mary'))",
-    "g.V('thomas').addE('knows').to(g.V('ben'))",
-    "g.V('ben').addE('knows').to(g.V('robin'))"
-]
-
-_gremlin_update_vertices = [
-    "g.V('thomas').property('age', 45)"
-]
-
-_gremlin_count_vertices = "g.V().count()"
-
-_gremlin_traversals = {
-    "Get all persons older than 40": "g.V().hasLabel('person').has('age', gt(40)).values('firstName', 'age')",
-    "Get all persons and their first name": "g.V().hasLabel('person').values('firstName')",
-    "Get all persons sorted by first name": "g.V().hasLabel('person').order().by('firstName', incr).values('firstName')",
-    "Get all persons that Thomas knows": "g.V('thomas').out('knows').hasLabel('person').values('firstName')",
-    "People known by those who Thomas knows": "g.V('thomas').out('knows').hasLabel('person').out('knows').hasLabel('person').values('firstName')",
-    "Get the path from Thomas to Robin": "g.V('thomas').repeat(out()).until(has('id', 'robin')).path().by('firstName')"
-}
 
 _gremlin_drop_operations = {
     "Drop Edge - Thomas no longer knows Mary": "g.V('thomas').outE('knows').where(inV().has('id', 'mary')).drop()",
@@ -66,7 +46,7 @@ def cleanup_graph(client):
     print("\n")
 
 
-def insert_vertex(client, obj: Type[pydanticmodels.BaseModel], label_field: str):
+def insert_vertex(client, obj: Type[pydanticmodels.BaseModel]):
     """
     Inserts a vertex or vertices into the Graph database.
 
@@ -74,12 +54,10 @@ def insert_vertex(client, obj: Type[pydanticmodels.BaseModel], label_field: str)
     ----------
     obj : BaseModel
         The Pydantic object representing the vertex data.
-    label_field : str
-        The name of the field to be used as the vertex label.
     """
     
-    # Get the label from the pydantic object
-    label = label_field
+   # Get the label from the object dynamically using the type field
+    label = getattr(obj, 'type', None)
 
     # Start with the basic addV query with the label
     query = f"g.addV('{label}')"
@@ -93,8 +71,7 @@ def insert_vertex(client, obj: Type[pydanticmodels.BaseModel], label_field: str)
             query += f".property('{field}', {value})"
         else:
             raise ValueError(f"Unsupported datatype for field {field}")
-
-    print("\n> {0}\n".format(query))
+        
     callback = client.submitAsync(query)
     if callback.result() is not None:
         print("\tInserted this vertex:\n\t{0}".format(
@@ -108,68 +85,37 @@ def insert_vertex(client, obj: Type[pydanticmodels.BaseModel], label_field: str)
     print("\n")
 
 
-def insert_edges(client):
+def insert_edge(client, meal: str, ingredient:str, relation:str = 'contains'):
+
+    # Construct query for adding edge
+    query = f"g.V().hasId('{meal}').addE('{relation}').to(g.V('{ingredient}'))"
+
     # This function inserts edges
-    for query in _gremlin_insert_edges:
-        print("\n> {0}\n".format(query))
-        callback = client.submitAsync(query)
-        if callback.result() is not None:
-            print("\tInserted this edge:\n\t{0}\n".format(
-                callback.result().all().result()))
-        else:
-            print("Something went wrong with this query:\n\t{0}".format(query))
-        print_status_attributes(callback.result())
-        print("\n")
-
-    print("\n")
-
-
-def update_vertices(client):
-    # This function updates vertices
-    for query in _gremlin_update_vertices:
-        print("\n> {0}\n".format(query))
-        callback = client.submitAsync(query)
-        if callback.result() is not None:
-            print("\tUpdated this vertex:\n\t{0}\n".format(
-                callback.result().all().result()))
-        else:
-            print("Something went wrong with this query:\n\t{0}".format(query))
-
-        print_status_attributes(callback.result())
-        print("\n")
-
-    print("\n")
-
-
-def count_vertices(client):
-    # This function counts vertices
-    print("\n> {0}".format(
-        _gremlin_count_vertices))
-    callback = client.submitAsync(_gremlin_count_vertices)
+    callback = client.submitAsync(query)
     if callback.result() is not None:
-        print("\tCount of vertices: {0}".format(callback.result().all().result()))
+            callback.result().all().result()
     else:
-        print("Something went wrong with this query: {0}".format(
-            _gremlin_count_vertices))
-
-    print("\n")
+        print("Something went wrong with this query:\n\t{0}".format(query))
     print_status_attributes(callback.result())
     print("\n")
 
+    print("\n")
 
-def execute_traversals(client):
-    # This function traverses vertices
-    for key in _gremlin_traversals:
-        print("{0}:".format(key))
-        print("> {0}\n".format(
-            _gremlin_traversals[key]))
-        callback = client.submitAsync(_gremlin_traversals[key])
-        for result in callback.result():
-            print("\t{0}".format(str(result)))
-        
-        print("\n")
-        print_status_attributes(callback.result())
-        print("\n")
+def get_all_meals(client):
+    # This function gets all available meals
+    callback = client.submitAsync("g.V().where(outE('contains').inV().has('qty',gt(0)))")
+    for result in callback.result():
+        print(json.dumps(result, indent=4))
+
+    print("/n")
+
+def get_ingredients_for_meal(client, meal):
+    # This function gets all ingredients for a meal and their location
+    callback = client.submitAsync(f"g.V().hasId('{meal}').outE('contains').inV().valueMap(true,'location')")
+    for result in callback.result():
+        print(json.dumps(result, indent = 4))
+
+    print("/n")
 
 
 def execute_drop_operations(client):
@@ -200,10 +146,20 @@ try:
 
     # Insert all vertices
     input("Let's insert some vertices into the graph. Press any key to continue...")
-    thing = pydanticmodels.Ingredient(name = 'Cheese', location = 'Fridge', ingredientType = 'Fresh', type = 'ingredient')
-    insert_vertex(client, thing, 'Food')
+    thing = pydanticmodels.Ingredient(id = 'Cheese', location = 'Fridge', ingredientType = 'Fresh', qty = 1, type = 'ingredient')
+    insert_vertex(client, thing)
+    thing2 = pydanticmodels.Ingredient(id = 'Toast', location = 'Kitchen', ingredientType = 'Fresh', qty = 1, type = 'ingredient')
+    insert_vertex(client, thing2)
+    thing3 = pydanticmodels.Meal(id = 'Cheese on Toast', type = 'meal')
+    insert_vertex(client, thing3)
+    insert_edge(client, 'Cheese on Toast', 'Cheese')
+    insert_edge(client, 'Cheese on Toast', 'Toast')
 
-    
+    # Find Cheese on Toast recipe
+    input("Let's find the cheese on toast recipe. Press any key to continue...")
+    get_all_meals(client)
+    input("Let's get the ingredients for Cheese on Toast. Press any key to continue...")
+    get_ingredients_for_meal(client, 'Cheese on Toast')
 
 except GremlinServerError as e:
     print('Code: {0}, Attributes: {1}'.format(e.status_code, e.status_attributes))
@@ -231,6 +187,4 @@ except GremlinServerError as e:
 
     traceback.print_exc(file=sys.stdout)
     sys.exit(1)
-
-print("\nAnd that's all! Sample complete")
-input("Press Enter to continue...")
+ 
