@@ -49,15 +49,6 @@ resource symbolicname 'Microsoft.DocumentDB/databaseAccounts/gremlinDatabases/gr
         ]
         version: 2
       }
-      // uniqueKeyPolicy: {
-      //   uniqueKeys: [
-      //     {
-      //       paths: [
-      //         '/name'
-      //       ]
-      //     }
-      //   ]
-      }
     }
   }
 }
